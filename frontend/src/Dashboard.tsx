@@ -28,9 +28,13 @@ const Dashboard: FunctionComponent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-// Calculate average temperature and maximum vibration from the sensor data
+// Calculate average and max temperature and max vibration from the sensor data
 const avgTemp = sensors.length
   ? (sensors.reduce((sum, s) => sum + s.temperature, 0) / sensors.length).toFixed(1)
+  : "N/A";
+
+const maxTemp = sensors.length
+  ? Math.max(...sensors.map((s) => s.temperature)).toFixed(1)
   : "N/A";
 
 const maxVibration = sensors.length
@@ -104,6 +108,9 @@ const CustomTooltip = ({ active, payload, label }) => {
     <div className="p-6 bg-gray-800 text-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-100">Sensor Dashboard</h1>
 
+        {/* Stats */}
+        <Stats avgTemp={avgTemp} maxTemp={maxTemp} maxVibration={maxVibration} />
+
         {/* Temperature Chart */}
         <div className="bg-gray-900 shadow-lg rounded-2xl p-6 mb-6 transition-transform transform hover:scale-105">
           <h2 className="text-xl font-semibold mb-4">Temperature Over Time</h2>
@@ -149,9 +156,6 @@ const CustomTooltip = ({ active, payload, label }) => {
             </LineChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Stats */}
-        <Stats avgTemp={avgTemp} maxVibration={maxVibration} />
 
 
       {/* Table */}
