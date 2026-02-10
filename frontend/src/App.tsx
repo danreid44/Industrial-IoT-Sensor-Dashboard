@@ -1,6 +1,6 @@
 import React from "react";
 import './App.css';
-import Dashboard from "./Dashboard.tsx"; // Ensure this file exists
+import Dashboard from "./Dashboard.tsx";
 
 function App() {
   return (

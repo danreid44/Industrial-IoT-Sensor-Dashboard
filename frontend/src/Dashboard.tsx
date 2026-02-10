@@ -1,6 +1,7 @@
-import React, { FunctionComponent, useState, useEffect } from "react"; // Import React and hooks
+import { useState, useEffect } from "react"; // Import hooks
+import type { FunctionComponent } from "react"; // Import FunctionComponent as a type
 import axios from "axios"; // Import axios for HTTP requests
-import Stats from "./Stats";
+import Stats from "./stats";
 
 import {
   LineChart,
@@ -12,6 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"; // Import recharts components
+import type { TooltipProps } from "recharts";
 
 // Define the structure of sensor data
 interface SensorData {
@@ -22,7 +24,7 @@ interface SensorData {
   timestamp: string;
 } 
 
-// Define the structure of the props for the Dashboard component
+// Define dashboard component and state variables
 const Dashboard: FunctionComponent = () => {
   const [sensors, setSensors] = useState<SensorData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +75,13 @@ console.log("API URL is:", API_URL);
     controller.abort(); // Cancels the request if unmounted
   };
 }, [API_URL]); // Fetch data when the component mounts
-
 // Custom tooltip for the charts
-const CustomTooltip = ({ active, payload, label }) => {
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<any, any>) => {
   if (active && payload && payload.length) {
     return (
       <div style={{
@@ -87,7 +93,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         fontSize: "14px"
       }}>
         <p style={{ margin: 0, color: "#a5b4fc" }}>
-          {new Date(label).toLocaleString()}
+          {new Date(label as string).toLocaleString()}
         </p>
         {payload.map((entry, idx) => (
           <p key={idx} style={{ color: entry.color, margin: 0 }}>
