@@ -1,200 +1,205 @@
-import { useState, useEffect } from "react"; // Import hooks
-import type { FunctionComponent } from "react"; // Import FunctionComponent as a type
-import axios from "axios"; // Import axios for HTTP requests
-import Stats from "./stats";
-
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  LineChart,
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts"; // Import recharts components
-import type { TooltipProps } from "recharts";
+} from "recharts";
 
-// Define the structure of sensor data
-interface SensorData {
+// Define the props for the Dashboard component
+interface DashboardProps {
+  motorName: string;
+}
+
+// Define the structure of a reading
+interface Reading {
   _id: string;
   name: string;
   temperature: number;
   vibration: number;
   timestamp: string;
-} 
-
-// Define dashboard component and state variables
-const Dashboard: FunctionComponent = () => {
-  const [sensors, setSensors] = useState<SensorData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-// Calculate average and max temperature and max vibration from the sensor data
-const avgTemp = sensors.length
-  ? (sensors.reduce((sum, s) => sum + s.temperature, 0) / sensors.length).toFixed(1)
-  : "N/A";
-
-const maxTemp = sensors.length
-  ? Math.max(...sensors.map((s) => s.temperature)).toFixed(1)
-  : "N/A";
-
-const maxVibration = sensors.length
-  ? Math.max(...sensors.map((s) => s.vibration)).toFixed(1)
-  : "N/A";
-
+}
 
 // Get the API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL;
-console.log("API URL is:", API_URL);
 
-// Get sensor data from the API URL
- useEffect(() => {
-  const controller = new AbortController(); // Create an AbortController to cancel the request if needed
+// Define the dashboard component that takes motorName as a prop
+const Dashboard = ({ motorName }: DashboardProps) => {
+  const [readings, setReadings] = useState<Reading[]>([]); // State to hold the sensor readings
+  const [loading, setLoading] = useState(true); // State to indicate if the first load is in progress
+  const [error, setError] = useState(""); // State to hold any error messages
 
-  const fetchData = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/sensors`, { signal: controller.signal }); // Fetch data from the API
-      setSensors(res.data);
-      setLoading(false);
-    } catch (err) {
-      if (axios.isCancel(err)) {
-        console.log("Request canceled:", err.message);
-      } else {
-        setError("Failed to fetch sensor data"); // Set error message if the request fails
-        setLoading(false);
+  // useEffect hook to fetch sensor readings when the component mounts
+  useEffect(() => {
+    const controller = new AbortController(); // Create an AbortController to cancel the request if needed
+
+    // Function to fetch sensor readings from the API
+    const fetchReadings = async () => {
+      try {
+        const response = await axios.get<Reading[]>(`${API_URL}/sensors`, {
+          signal: controller.signal,
+        }); // Make a GET request to the API to fetch sensor readings
+        setReadings(response.data); // Update the readings state with the fetched data
+        setError(""); // Clear a previous error after a successful poll
+      } catch (fetchError: unknown) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to fetch sensor data:", fetchError); // Log the error to the console if the request was not aborted
+          setError("Failed to fetch sensor data");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false); // Polling updates never call setLoading(true), so only the first load shows this state
+        }
       }
-    }
-  };
+    };
 
-  fetchData();
-  const interval = setInterval(fetchData, 5000); // Fetch data every 5 seconds
+    void fetchReadings();
+    const intervalId = window.setInterval(() => {
+      void fetchReadings();
+    }, 5000);
 
-  return () => {
-    clearInterval(interval);
-    controller.abort(); // Cancels the request if unmounted
-  };
-}, [API_URL]); // Fetch data when the component mounts
-// Custom tooltip for the charts
+    return () => {
+      window.clearInterval(intervalId);
+      controller.abort();
+    };
+  }, []);
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<any, any>) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        background: "#1a1a1a",
-        color: "#f3f4f6", // Tailwind's text-gray-100
-        border: "1px solid #333",
-        borderRadius: "8px",
-        padding: "12px",
-        fontSize: "14px"
-      }}>
-        <p style={{ margin: 0, color: "#a5b4fc" }}>
-          {new Date(label as string).toLocaleString()}
-        </p>
-        {payload.map((entry, idx) => (
-          <p key={idx} style={{ color: entry.color, margin: 0 }}>
-            {entry.name}: {entry.value}
-          </p>
-        ))}
-      </div>
-    );
+  if (loading) {
+    return <p className="text-center">Loading sensor data...</p>;
   }
-  return null;
-};
 
-// Log the sensor data to the console
-  if (loading) return <p className="text-center mt-10">Loading sensor data...</p>;
-  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
+  const latestReading = readings[0];
+  const chartReadings = [...readings].reverse();
 
   return (
-    <div className="p-6 bg-gray-800 text-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-100">Sensor Dashboard</h1>
+    <section className="w-full rounded-2xl bg-gray-900 p-6 text-gray-100 shadow-lg">
+      <h2 className="mb-4 text-xl font-semibold">{motorName} Readings</h2>
 
-        {/* Stats */}
-        <Stats avgTemp={avgTemp} maxTemp={maxTemp} maxVibration={maxVibration} />
+      {error && (
+        <p className="mb-4 text-center text-red-500">{error}</p>
+      )}
 
-        {/* Temperature Chart */}
-        <div className="bg-gray-900 shadow-lg rounded-2xl p-6 mb-6 transition-transform transform hover:scale-105">
-          <h2 className="text-xl font-semibold mb-4">Temperature Over Time</h2>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={sensors}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="timestamp"
-                tickFormatter={(time) => new Date(time).toLocaleTimeString()}
-                stroke="#f3f4f6" // Tailwind's text-gray-100
-                tick={{ fill: "#f3f4f6" }}
-              />
-              <YAxis
-                stroke="#f3f4f6" // Tailwind's text-gray-100
-                tick={{ fill: "#f3f4f6" }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Line type="monotone" dataKey="temperature" stroke="#4f46e5" strokeWidth={2} name="Temperature (°C)" />
-            </LineChart>
-          </ResponsiveContainer>
+      {latestReading && (
+        <div className="mb-6 rounded-xl border border-gray-700 bg-gray-800 p-6">
+          <p className="text-sm uppercase text-gray-400">Latest Reading</p>
+          <p className="mt-2 text-3xl font-bold">
+            {latestReading.temperature.toFixed(2)}°C
+          </p>
+          <p className="mt-1 text-lg text-gray-200">
+            Vibration: {latestReading.vibration.toFixed(2)} mm/s
+          </p>
+          <p className="mt-2 text-sm text-gray-400">
+            {latestReading.name} ·{" "}
+            {new Date(latestReading.timestamp).toLocaleString()}
+          </p>
         </div>
+      )}
 
-        {/* Vibration Chart */}
-        <div className="bg-gray-900 shadow-lg rounded-2xl p-6 mb-6 transition-transform transform hover:scale-105">
-          <h2 className="text-xl font-semibold mb-2">Vibration Over Time</h2>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={sensors}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="timestamp"
-                tickFormatter={(time) => new Date(time).toLocaleTimeString()}
-                stroke="#f3f4f6" // Tailwind's text-gray-100
-                tick={{ fill: "#f3f4f6" }} // Tick label color
-              />
-              <YAxis
-                stroke="#f3f4f6" // Tailwind's text-gray-100
-                tick={{ fill: "#f3f4f6" }} // Tick label color
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Line type="monotone" dataKey="vibration" stroke="#059669" strokeWidth={2} name="Vibration (mm/s)" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-
-      {/* Table */}
-      <div className="bg-gray-900 shadow-lg rounded-2xl p-6 transition-transform transform hover:scale-105">
-        <h2 className="text-xl font-semibold mb-4">Sensor Data Table</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-100 rounded-lg">
-            <thead>
-              <tr className="bg-gray-900 text-gray-100 uppercase text-sm leading-normal">
-                <th className="p-3 text-left">Sensor Name</th>
-                <th className="p-3 text-left">Temperature (°C)</th>
-                <th className="p-3 text-left">Vibration (mm/s)</th>
-                <th className="p-3 text-left">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sensors.map((sensor) => (
-                <tr key={sensor._id} className="border-b hover:bg-gray-500">
-                  <td className="p-2">{sensor.name}</td>
-                  <td className="p-2">{sensor.temperature.toFixed(2)}</td>
-                  <td className="p-2">{sensor.vibration.toFixed(2)}</td>
-                  <td className="p-2">
-                    {new Date(sensor.timestamp).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="mb-6 rounded-2xl bg-gray-900 p-6 shadow-lg">
+        <h2 className="mb-4 text-xl font-semibold">Temperature Over Time</h2>
+        <ResponsiveContainer width="100%" height={350}>
+          <LineChart data={chartReadings}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={(time) => new Date(time).toLocaleTimeString()}
+              stroke="#f3f4f6"
+              tick={{ fill: "#f3f4f6" }}
+            />
+            <YAxis
+              stroke="#f3f4f6"
+              tick={{ fill: "#f3f4f6" }}
+            />
+            <Tooltip
+              labelFormatter={(label) =>
+                new Date(String(label)).toLocaleString()
+              }
+              contentStyle={{
+                background: "#1a1a1a",
+                border: "1px solid #333",
+                borderRadius: "8px",
+              }}
+            />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="temperature"
+              stroke="#4f46e5"
+              strokeWidth={2}
+              name="Temperature (°C)"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
-    </div>
+
+      <div className="mb-6 rounded-2xl bg-gray-900 p-6 shadow-lg">
+        <h2 className="mb-4 text-xl font-semibold">Vibration Over Time</h2>
+        <ResponsiveContainer width="100%" height={350}>
+          <LineChart data={chartReadings}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={(time) => new Date(time).toLocaleTimeString()}
+              stroke="#f3f4f6"
+              tick={{ fill: "#f3f4f6" }}
+            />
+            <YAxis
+              stroke="#f3f4f6"
+              tick={{ fill: "#f3f4f6" }}
+            />
+            <Tooltip
+              labelFormatter={(label) =>
+                new Date(String(label)).toLocaleString()
+              }
+              contentStyle={{
+                background: "#1a1a1a",
+                border: "1px solid #333",
+                borderRadius: "8px",
+              }}
+            />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="vibration"
+              stroke="#059669"
+              strokeWidth={2}
+              name="Vibration (mm/s)"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-100">
+          <thead>
+            <tr className="text-left text-sm uppercase">
+              <th className="p-3">Sensor Name</th>
+              <th className="p-3">Temperature (°C)</th>
+              <th className="p-3">Vibration (mm/s)</th>
+              <th className="p-3">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {readings.map((reading) => (
+              <tr key={reading._id} className="border-t hover:bg-gray-800">
+                <td className="p-3">{reading.name}</td>
+                <td className="p-3">{reading.temperature.toFixed(2)}</td>
+                <td className="p-3">{reading.vibration.toFixed(2)}</td>
+                <td className="p-3">
+                  {new Date(reading.timestamp).toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 };
 
-export default Dashboard; // Export the Dashboard component
-
+export default Dashboard;
