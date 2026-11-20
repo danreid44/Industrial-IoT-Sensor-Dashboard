@@ -9,7 +9,7 @@ const API_URL = process.env.API_URL // API endpoint
 function generateFakeReading() {
   const temperature = (Math.random() * (35- 22) + 22).toFixed(1);  // Between 22.0 and 35.0 °C
   const vibration = (Math.random() * (6.00 - 2.00) + 2.00).toFixed(2); // Between 2.00 and 6.00 mm/s
-  const name = 'Motor 0' + Math.floor(Math.random() * 5 + 1);  // Motor 01 to Motor 05
+  const name = 'Motor 01';  // Name of Motor
   return {
     name,
     temperature: parseFloat(temperature),

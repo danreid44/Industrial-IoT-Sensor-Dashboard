@@ -1,37 +1,42 @@
-import dotenv from 'dotenv'; // Load environment variables from .env
-import mongoose from 'mongoose'; // MongoDB connection
-import Sensor from './models/sensor.js';  // Import the Sensor model to define data structure
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import { fileURLToPath } from 'node:url';
+import Sensor from './models/sensor.js';
 
-dotenv.config(); // Load environment variables from .env file
+dotenv.config({ path: fileURLToPath(new URL('.env', import.meta.url)) });
 
-/* Connect to MongoDB using the URI from .env file
-Ensure compatibility with the latest MongoDB drivers */
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-// Run the seedData function to insert sample data
-// Define Schema and Model for the sensor data in MongoDB
 const seedData = async () => {
-  try {
-    // Clear existing sensor data before seeding new data
-    await Sensor.deleteMany({});
-    console.log('Cleared all existing sensor data');
+  const mongoUri = process.env.MONGO_URI?.trim();
+  if (!mongoUri || !/^mongodb(?:\+srv)?:\/\//i.test(mongoUri)) {
+    throw new Error(
+      'MONGO_URI must start with "mongodb://" or "mongodb+srv://". Check backend/.env and any MONGO_URI environment variable.',
+    );
+  }
 
-    await Sensor.insertMany([
-      { name: 'Motor 01', temperature: 22.4, vibration: 2.95 },
-      { name: 'Motor 02', temperature: 29.5, vibration: 5.67 },
-      { name: 'Motor 03', temperature: 23.6, vibration: 3.18 },
-      { name: 'Motor 04', temperature: 27.3, vibration: 4.29 },
-    ]); // Insert sample data for 60 Hz AC motors
-    console.log('Sample sensor data inserted'); // Log success message
-  } catch (error) {
-    console.error('Error inserting sample data:', error); // Log error message
+  try {
+    await mongoose.connect(mongoUri);
+
+    const { deletedCount } = await Sensor.deleteMany({});
+    console.log(
+      `Deleted ${deletedCount} sensor records from ${mongoose.connection.name}.${Sensor.collection.collectionName}`,
+    );
+
+    const insertedSensors = await Sensor.insertMany([
+      { name: 'Motor 01', temperature: 28.5, vibration: 2.95 },
+      { name: 'Motor 01', temperature: 29.4, vibration: 4.67 },
+      { name: 'Motor 01', temperature: 27.9, vibration: 3.18 },
+      { name: 'Motor 01', temperature: 29.1, vibration: 4.19 },
+    ]);
+    const recordCount = await Sensor.countDocuments();
+    console.log(
+      `Inserted ${insertedSensors.length} seed records; ${mongoose.connection.name}.${Sensor.collection.collectionName} now contains ${recordCount} sensor records`,
+    );
   } finally {
-    mongoose.connection.close(); // Close the connection to MongoDB
+    await mongoose.disconnect();
   }
 };
 
-// Run the script to seed the database
-seedData();
+seedData().catch((error) => {
+  console.error('Error seeding sensor data:', error);
+  process.exitCode = 1;
+});

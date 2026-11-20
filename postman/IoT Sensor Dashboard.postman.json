@@ -13,12 +13,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5001/sensors",
+					"raw": "http://localhost:5000/sensors",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5001",
+					"port": "5000",
 					"path": [
 						"sensors"
 					]
@@ -56,12 +56,12 @@
 					"raw": "{\n  \"name\": \"Motor X\",\n  \"temperature\": 75.4,\n  \"vibration\": 127.38\n}"
 				},
 				"url": {
-					"raw": "http://localhost:5001/sensors",
+					"raw": "http://localhost:5000/sensors",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5001",
+					"port": "5000",
 					"path": [
 						"sensors"
 					]
@@ -84,12 +84,12 @@
 					"raw": "{\n  \"temperature\": 72.8\n}"
 				},
 				"url": {
-					"raw": "http://localhost:5001/sensors/:id",
+					"raw": "http://localhost:5000/sensors/:id",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5001",
+					"port": "5000",
 					"path": [
 						"sensors",
 						":id"
@@ -110,12 +110,12 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5001/sensors/:id",
+					"raw": "http://localhost:5000/sensors/:id",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5001",
+					"port": "5000",
 					"path": [
 						"sensors",
 						":id"

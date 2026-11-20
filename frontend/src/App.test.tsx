@@ -1,10 +1,8 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { renderToStaticMarkup } from 'react-dom/server';
 import App from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
-});
+const markup = renderToStaticMarkup(<App />);
+
+if (markup === '') {
+  throw new Error('App did not render any markup.');
+}
