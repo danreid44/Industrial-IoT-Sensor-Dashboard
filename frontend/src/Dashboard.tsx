@@ -42,6 +42,7 @@ const Dashboard = ({ motorName }: DashboardProps) => {
     const fetchReadings = async () => {
       try {
         const response = await axios.get<Reading[]>(`${API_URL}/sensors`, {
+          params: { name: motorName, limit: 50 }, // Pass the motor name as a query parameter
           signal: controller.signal,
         }); // Make a GET request to the API to fetch sensor readings
         setReadings(response.data); // Update the readings state with the fetched data
@@ -67,7 +68,7 @@ const Dashboard = ({ motorName }: DashboardProps) => {
       window.clearInterval(intervalId);
       controller.abort();
     };
-  }, []);
+  }, [motorName]);
 
   if (loading) {
     return <p className="text-center">Loading sensor data...</p>;
@@ -185,7 +186,7 @@ const Dashboard = ({ motorName }: DashboardProps) => {
             </tr>
           </thead>
           <tbody>
-            {readings.map((reading) => (
+            {readings.slice(0, 10).map((reading) => (
               <tr key={reading._id} className="border-t hover:bg-gray-800">
                 <td className="p-3">{reading.name}</td>
                 <td className="p-3">{reading.temperature.toFixed(2)}</td>

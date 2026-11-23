@@ -83,7 +83,7 @@ app.post('/sensors', async (req, res) => {
   try {
     const newSensor = new Sensor(req.body);
     await newSensor.save();
-    res.status(201).json({ message: 'Sensor data saved' });
+    res.status(201).json(newSensor);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

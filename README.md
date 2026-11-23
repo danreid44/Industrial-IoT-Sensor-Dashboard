@@ -71,7 +71,7 @@ npm run dev # Run frontend server at http://localhost:5173
 
 | Method | Route          | Description            |
 | ------ | -------------- | ---------------------- |
-| GET    | `/sensors`     | Fetch all sensor data  |
+| GET    | `/sensors`     | Fetch 50 sensor data   |
 | POST   | `/sensors`     | Add new sensor data    |
 | PATCH  | `/sensors/:id` | Update a sensor record |
 | DELETE | `/sensors/:id` | Delete a sensor record |
