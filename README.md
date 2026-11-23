@@ -10,7 +10,7 @@ To aid development and demonstration, the backend includes a script to populate 
 - Sensor simulator script generates sample data to the API every 5 seconds
 - MongoDB used to store the sensor data with timestamps
 - Frontend is built with React, TypeScript, and TailwindCSS to create an interactive dashboard
-- Dashboard automatically refreshes to reflect live data in real time
+- Dashboard automatically refreshes to reflect data polled every 5 seconds
 - Postman collection for testing the API endpoints and CRUD operations
 
 
@@ -43,7 +43,7 @@ To aid development and demonstration, the backend includes a script to populate 
 ## 1. Clone the Repo ##
 
 ```Bash
-git clone https://github.com/yourusername/iot-sensor-dashboard.git
+git clone https://github.com/danreid44/iot-sensor-dashboard.git
 cd iot-sensor-dashboard
 ```
 
@@ -52,7 +52,7 @@ cd iot-sensor-dashboard
 ```Bash
 cd backend
 npm install  # Install dependencies
-cp .env.example .env  # Configure your MongoDB URI and API URL in .env
+cp .env.example .env  # Configure your MongoDB URI in .env
 node seed.js  # Populate MongoDB with sample data
 npm start  # Start backend server at http://localhost:5000/sensors
 node sensorSimulator.js # Start simulator (generate data every 5 sec)
@@ -69,9 +69,9 @@ npm run dev # Run frontend server at http://localhost:5173
 
 ## API Endpoints ##
 
-| Method | Route          | Description            |
-| ------ | -------------- | ---------------------- |
-| GET    | `/sensors`     | Fetch 50 sensor data   |
-| POST   | `/sensors`     | Add new sensor data    |
-| PATCH  | `/sensors/:id` | Update a sensor record |
-| DELETE | `/sensors/:id` | Delete a sensor record |
+| Method | Route          | Description                                                                         |
+| ------ | -------------- | --------------------------------------------------                                  |
+| GET    | `/sensors`     | Fetch sensor data, limit (default 50) and sensor name are optional query parameters |
+| POST   | `/sensors`     | Add new sensor data and return created reading information                          |
+| PATCH  | `/sensors/:id` | Update a sensor record of ID                                                        |
+| DELETE | `/sensors/:id` | Delete a sensor record of ID                                                        |
