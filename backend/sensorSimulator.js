@@ -22,7 +22,7 @@ function generateFakeReading() {
 async function sendReading() {
   const reading = generateFakeReading();
   try {
-    const res = await axios.post(API_URL, reading); // Send POST request to API
+    await axios.post(API_URL, reading); // Send POST request to API
     console.log(`Sent: ${reading.name}, Temp = ${reading.temperature}°C, Vibration = ${reading.vibration} mm/s`);
   } catch (err) {
     console.error('Error sending data', err.message); // Log error message

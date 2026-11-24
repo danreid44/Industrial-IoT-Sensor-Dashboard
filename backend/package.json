@@ -11,7 +11,7 @@
     "start:5001": "cross-env PORT=5001 node server.js",
     "start:5002": "cross-env PORT=5002 node server.js",
     "kill-port": "./kill-port.sh",
-    "kill-port-win": "kill-port.bat",
+    "kill-port-win": "notepad kill-port.bat",
     "restart:5000": "npm run kill-port && npm run start:5000",
     "restart:5000-win": "npm run kill-port-win && npm run start:5000"
   },
